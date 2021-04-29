@@ -119,3 +119,14 @@ select CODIGO_ARTICULO,descrip_comercial,CODIGO_ESTAD3 lab,CODIGO_ESTAD5 uen,COD
 (SELECT descripcion FROM familias WHERE codigo_familia=articulos.codigo_estad6 AND numero_tabla = 6  AND ultimo_nivel = 'S' AND codigo_empresa =va_articulos.codigo_empresa)
 
 
+/********* sql para dm bi ************/
+with x as (
+SELECT to_number(ejercicio) ejercicio,to_number(v_MES) v_mes,reg,cod,descrip,vendedor, 1 nro_ttl_clie,0 nro_clie_visitado,0 nro_clie_vta, 0 bs_neto_clie,'Panel Clie' dato from bol_panel_clie group by ejercicio,v_MES,reg,vendedor,cod,descrip
+UNION ALL
+/************VISITAS DE AGENTES *********/
+select EJERCICIO, V_MES,reg, cliente COD, descrip,VENDEDOR,0 nro_ttl_clie, 1 nro_clie_visitado,0 nro_clie_vta, 0 bs_neto_clie,'Visitas' dato FROM (select AGENTES_VISITAS.*,extract(year from fecha) EJERCICIO, extract(MONTH from fecha) V_MES,(SELECT RAZON_SOCIAL2 FROM CLIENTES A WHERE A.CODIGO_EMPRESA=AGENTES_VISITAS.empresa AND A.codigo_rapido=AGENTES_VISITAS.cliente) descrip,(SELECT p.nombre FROM agentes p WHERE p.codigo = AGENTES_VISITAS.agente AND empresa = agentes_visitas.empresa) vendedor,decode((SELECT zona FROM CLIENTES A WHERE A.CODIGO_EMPRESA=AGENTES_VISITAS.empresa AND A.codigo_rapido=AGENTES_VISITAS.cliente),'0410','SCZ','0420','LPZ','0430','CBBA','0440','TJA','0450','ALTO','0451','ALTO','0460','SCR','0461','SCR','0470','BENI','0471','BENI','SIN REG') reg from agentes_visitas) agentes_visitas WHERE EMPRESA='004' and ejercicio=2021 and v_mes=TO_NUMBER(to_char(:p_fecha,'MM'))
+group by EJERCICIO, v_MES,reg,VENDEDOR,cliente,descrip
+) 
+select EJERCICIO, V_MES,reg, VEN.DEDOR,sum(nro_ttl_clie) nro_ttl_clie, sum(nro_clie_visitado) nro_clie_visitado,sum( nro_clie_vta) nro_clie_vta, sum( bs_neto_clie) bs_neto_clie 
+from x WHERE descrip NOT LIKE 'CLIENTE %' and vendedor not in ('RITA NORMINHA TOLEDO CHACON','CELIA LUJAN ORTUÑO ASTURIZAGA','-DISTRIBUIDORA','XIOMARA MARQUEZ GULLOZO','PAMELA JAQUELIN DELGADO PATTY','MONICA DANIELA AYAVIRI CALDERON','IRIS SONIA LUCAS APONTE','GENERAL') 
+group by EJERCICIO, V_MES,reg, VENDEDOR
